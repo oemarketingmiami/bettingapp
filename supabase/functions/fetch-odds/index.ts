@@ -7,6 +7,7 @@
 //          are injected automatically in the Functions runtime).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { normalizeOdds, type OddsApiEvent } from "../_shared/oddsNormalize.ts";
+import { isServiceRole } from "../_shared/auth.ts";
 
 const SPORT = "basketball_nba";
 const ODDS_HOST = "https://api.the-odds-api.com";
@@ -14,11 +15,8 @@ const ODDS_HOST = "https://api.the-odds-api.com";
 Deno.serve(async (req) => {
   // Lock the function to the service role (cron / authed caller). A leaked URL
   // alone can't burn Odds API credits.
-  const auth = req.headers.get("Authorization") ?? "";
+  if (!isServiceRole(req)) return json({ error: "unauthorized" }, 401);
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  if (auth !== `Bearer ${serviceKey}`) {
-    return json({ error: "unauthorized" }, 401);
-  }
 
   const oddsKey = Deno.env.get("THE_ODDS_API_KEY");
   if (!oddsKey) return json({ error: "THE_ODDS_API_KEY not set" }, 500);

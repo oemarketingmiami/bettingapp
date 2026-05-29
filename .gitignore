@@ -8,6 +8,7 @@ node_modules/
 .next/
 out/
 .vercel/
+next-env.d.ts
 
 # Python (model service)
 services/model/.venv/

@@ -11,14 +11,24 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Ajv from "https://esm.sh/ajv@8";
 import addFormats from "https://esm.sh/ajv-formats@3";
 import { computeEdge, predict } from "../_shared/modelClient.ts";
+import { isServiceRole } from "../_shared/auth.ts";
+// Imported (not read at runtime) so the deploy bundler includes them.
+import { SYSTEM_PROMPT } from "./prompts/systemPrompt.ts";
+import PICK_SCHEMA from "./prompts/pick_schema.json" with { type: "json" };
 
 const ELO_BASE = 1500;
 
 Deno.serve(async (req) => {
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  if ((req.headers.get("Authorization") ?? "") !== `Bearer ${serviceKey}`) {
-    return json({ error: "unauthorized" }, 401);
+  try {
+    return await handle(req);
+  } catch (e) {
+    return json({ error: "unhandled", detail: String(e), stack: (e as Error)?.stack ?? null }, 500);
   }
+});
+
+async function handle(req: Request): Promise<Response> {
+  if (!isServiceRole(req)) return json({ error: "unauthorized" }, 401);
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   const modelUrl = Deno.env.get("MODEL_SERVICE_URL");
   if (!modelUrl) return json({ error: "MODEL_SERVICE_URL not set" }, 500);
@@ -72,9 +82,11 @@ Deno.serve(async (req) => {
     enriched.push({ game: g, model: p, market: edge });
   }
 
-  // 4) Hand to Claude with the analyst prompt + schema (colocated under ./prompts).
-  const prompts = await loadPrompts();
-  const card = await generateAndValidate(prompts, { slate_date: slateDate, games: enriched });
+  // 4) Hand to Claude with the analyst prompt + schema.
+  const card = await generateAndValidate(
+    { system: SYSTEM_PROMPT, schema: PICK_SCHEMA as Record<string, unknown> },
+    { slate_date: slateDate, games: enriched },
+  );
 
   // 5) Persist once per slate. Final per-pick column mapping is finalized against
   // pick_schema.json once that file lands; for now the validated card is stored whole.
@@ -84,32 +96,28 @@ Deno.serve(async (req) => {
   if (cErr) return json({ error: "card_persist", detail: cErr.message }, 500);
 
   return json({ ok: true, slate_date: slateDate, games: enriched.length });
-});
+}
 
 // --- Claude wiring (verbatim prompt + schema; no hand-rolled rubric) ----------
 
-async function loadPrompts() {
-  // Files are colocated under this function dir so Supabase bundles them on deploy.
-  const system = await Deno.readTextFile(new URL("./prompts/system_prompt.txt", import.meta.url));
-  const schema = JSON.parse(await Deno.readTextFile(new URL("./prompts/pick_schema.json", import.meta.url)));
-  return { system, schema: schema as Record<string, unknown> };
-}
+interface Msg { role: "user" | "assistant"; content: string }
 
 async function generateAndValidate(
   prompts: { system: string; schema: Record<string, unknown> },
-  context: unknown,
+  context: { slate_date: string; games: unknown },
 ): Promise<unknown> {
   const ajv = new Ajv({ allErrors: true });
   addFormats(ajv);
   const validate = ajv.compile(prompts.schema);
 
+  // Real conversation so Claude can self-correct from its own prior output.
+  const messages: Msg[] = [{
+    role: "user",
+    content: `Today's slate context (games, model probabilities, de-vigged market edges):\n\n${JSON.stringify(context, null, 2)}\n\nProduce today's card as JSON matching the schema. JSON only.`,
+  }];
   let lastErrors = "";
-  // Up to 3 tries: Claude must return JSON that validates against pick_schema.json.
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const userMsg = attempt === 0
-      ? `Today's slate context (games, model probabilities, de-vigged market edges):\n\n${JSON.stringify(context, null, 2)}\n\nProduce today's card as JSON matching the schema. JSON only.`
-      : `Your previous output failed schema validation:\n${lastErrors}\n\nReturn corrected JSON only, matching the schema exactly.`;
 
+  for (let attempt = 0; attempt < 3; attempt++) {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -121,7 +129,7 @@ async function generateAndValidate(
         model: "claude-opus-4-8",
         max_tokens: 8000,
         system: prompts.system,
-        messages: [{ role: "user", content: userMsg }],
+        messages,
       }),
     });
     if (!res.ok) throw new Error(`anthropic ${res.status}: ${await res.text()}`);
@@ -130,16 +138,24 @@ async function generateAndValidate(
       .filter((b: { type: string }) => b.type === "text")
       .map((b: { text: string }) => b.text)
       .join("");
+    messages.push({ role: "assistant", content: text });
 
-    let parsed: unknown;
+    let parsed: Record<string, unknown> | null = null;
     try {
       parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
     } catch {
-      lastErrors = "Output was not valid JSON.";
+      messages.push({ role: "user", content: "That was not valid JSON. Return only the JSON object, no prose or code fences." });
       continue;
     }
+    // We own the slate date — inject it rather than trusting the model to echo it.
+    parsed!.slate_date = context.slate_date;
+
     if (validate(parsed)) return parsed;
     lastErrors = JSON.stringify(validate.errors, null, 2);
+    messages.push({
+      role: "user",
+      content: `Your JSON failed schema validation with these errors:\n${lastErrors}\n\nReturn the corrected, COMPLETE JSON object only — fix exactly these issues and keep everything else.`,
+    });
   }
   throw new Error(`Card failed schema validation after 3 attempts:\n${lastErrors}`);
 }
