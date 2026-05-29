@@ -1,0 +1,170 @@
+[
+  {
+    "id": "c2c2561efd4d4f69367aa83be60995a0",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA",
+    "commence_time": "2026-05-31T00:10:00Z",
+    "home_team": "Oklahoma City Thunder",
+    "away_team": "San Antonio Spurs",
+    "bookmakers": [
+      {
+        "key": "draftkings",
+        "title": "DraftKings",
+        "last_update": "2026-05-29T04:39:37Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-05-29T04:39:37Z",
+            "outcomes": [
+              {
+                "name": "Oklahoma City Thunder",
+                "price": -155
+              },
+              {
+                "name": "San Antonio Spurs",
+                "price": 130
+              }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-05-29T04:39:37Z",
+            "outcomes": [
+              {
+                "name": "Over",
+                "price": -105,
+                "point": 212.5
+              },
+              {
+                "name": "Under",
+                "price": -115,
+                "point": 212.5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "fanduel",
+        "title": "FanDuel",
+        "last_update": "2026-05-29T04:39:54Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-05-29T04:39:54Z",
+            "outcomes": [
+              {
+                "name": "Oklahoma City Thunder",
+                "price": -154
+              },
+              {
+                "name": "San Antonio Spurs",
+                "price": 130
+              }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-05-29T04:39:54Z",
+            "outcomes": [
+              {
+                "name": "Over",
+                "price": -106,
+                "point": 212.5
+              },
+              {
+                "name": "Under",
+                "price": -114,
+                "point": 212.5
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "27f8823f01243e8857b317dec213f14c",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA",
+    "commence_time": "2026-06-04T00:40:00Z",
+    "home_team": "Oklahoma City Thunder",
+    "away_team": "New York Knicks",
+    "bookmakers": [
+      {
+        "key": "fanduel",
+        "title": "FanDuel",
+        "last_update": "2026-05-29T04:39:54Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-05-29T04:39:54Z",
+            "outcomes": [
+              {
+                "name": "New York Knicks",
+                "price": 184
+              },
+              {
+                "name": "Oklahoma City Thunder",
+                "price": -220
+              }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-05-29T04:39:54Z",
+            "outcomes": [
+              {
+                "name": "Over",
+                "price": -112,
+                "point": 215.5
+              },
+              {
+                "name": "Under",
+                "price": -108,
+                "point": 215.5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "draftkings",
+        "title": "DraftKings",
+        "last_update": "2026-05-29T04:39:37Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-05-29T04:39:37Z",
+            "outcomes": [
+              {
+                "name": "New York Knicks",
+                "price": 205
+              },
+              {
+                "name": "Oklahoma City Thunder",
+                "price": -250
+              }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-05-29T04:39:37Z",
+            "outcomes": [
+              {
+                "name": "Over",
+                "price": -110,
+                "point": 216.5
+              },
+              {
+                "name": "Under",
+                "price": -110,
+                "point": 216.5
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

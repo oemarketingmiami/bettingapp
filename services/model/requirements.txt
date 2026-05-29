@@ -1,0 +1,15 @@
+# OE Picks — forecasting / modeling service
+# Core
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+numpy>=1.26
+# Calibration hook (isotonic / Platt). Used once you fit a calibrator; import is cheap.
+scikit-learn>=1.4
+# Poisson / Dixon-Coles for low-scoring sports (NHL/soccer). NBA-first uses Elo only,
+# so this is optional — uncomment when you add those sports.
+# penaltyblog>=1.0
+# Dev / test
+pytest>=8.0
+httpx>=0.27

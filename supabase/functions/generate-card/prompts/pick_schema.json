@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OE Picks — Daily Card",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slate_date", "slate_quality", "day_type", "picks", "bets_to_avoid", "payout_table", "final_verdict"],
+  "properties": {
+    "slate_date": { "type": "string", "format": "date" },
+    "slate_quality": { "enum": ["Strong", "Medium", "Weak", "Pass"] },
+    "day_type": { "enum": ["straight", "prop", "parlay", "pass"] },
+    "five_leg_justified": { "type": "boolean" },
+    "picks": { "type": "array", "items": { "$ref": "#/definitions/pick" } },
+    "parlay": { "anyOf": [{ "type": "null" }, { "$ref": "#/definitions/parlay" }] },
+    "bets_to_avoid": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["matchup", "market", "reason"],
+        "properties": {
+          "matchup": { "type": "string" },
+          "market": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "payout_table": {
+      "type": "array",
+      "description": "Stakes are fixed: 50, 100, 200, 300, 500, 1000.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stake", "to_win", "total_return"],
+        "properties": {
+          "stake": { "type": "number", "enum": [50, 100, 200, 300, 500, 1000] },
+          "to_win": { "type": "number" },
+          "total_return": { "type": "number" }
+        }
+      }
+    },
+    "final_verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "best_bet", "discipline_note"],
+      "properties": {
+        "summary": { "type": "string" },
+        "best_bet": { "type": "string" },
+        "discipline_note": { "type": "string" }
+      }
+    }
+  },
+  "definitions": {
+    "edge_rating": { "enum": ["Small", "Moderate", "Strong", "Elite"] },
+    "risk_flag": {
+      "enum": [
+        "injury volatility", "pending news", "line moved too far", "blowout risk",
+        "back-to-back fatigue", "correlation risk", "public trap risk",
+        "limited sample size", "role uncertainty"
+      ]
+    },
+    "pick": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sport", "matchup", "market", "pick", "line_or_odds", "card_type",
+        "bet_grade", "est_win_prob", "confidence", "edge_rating", "suggested_units",
+        "reasoning", "risk_flags"],
+      "properties": {
+        "sport": { "type": "string" },
+        "matchup": { "type": "string" },
+        "market": { "type": "string" },
+        "pick": { "type": "string" },
+        "line_or_odds": { "type": "string" },
+        "card_type": { "enum": ["safer", "aggressive", "longshot", "prop", "total"] },
+        "bet_grade": { "type": "number", "minimum": 0, "maximum": 100 },
+        "est_win_prob": { "type": "number", "minimum": 0, "maximum": 100 },
+        "confidence": { "type": "number", "minimum": 1, "maximum": 10 },
+        "edge_rating": { "$ref": "#/definitions/edge_rating" },
+        "suggested_units": { "type": "number", "minimum": 0, "maximum": 2.0 },
+        "reasoning": { "type": "string", "minLength": 1 },
+        "risk_flags": { "type": "array", "items": { "$ref": "#/definitions/risk_flag" } },
+        "alternatives_rejected": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "parlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legs", "weakest_leg", "overall_risk"],
+      "properties": {
+        "legs": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pick", "grade", "prob", "justification"],
+            "properties": {
+              "pick": { "type": "string" },
+              "grade": { "type": "number", "minimum": 0, "maximum": 100 },
+              "prob": { "type": "number", "minimum": 0, "maximum": 100 },
+              "justification": { "type": "string" }
+            }
+          }
+        },
+        "weakest_leg": { "type": "string" },
+        "overall_risk": { "type": "string" }
+      }
+    }
+  }
+}
