@@ -157,7 +157,7 @@ export function Chat({ slateCount }: { slateCount: number }) {
 
       {empty ? (
         <motion.div variants={stagger} initial="hidden" animate="show"
-          className="z-10 flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4">
+          className="z-10 flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 pb-[16vh]">
           <div className="relative flex flex-col items-center text-center">
             {/* soft glow behind the wordmark */}
             <div className="hero-glow pointer-events-none absolute -top-10 h-48 w-[28rem] max-w-[90vw] rounded-full bg-indigo-500/25 blur-3xl" />
@@ -181,7 +181,7 @@ export function Chat({ slateCount }: { slateCount: number }) {
               </span>
             </motion.div>
 
-            <motion.h1 variants={fadeUp} className="text-gradient font-display mt-5 text-6xl font-bold tracking-tight sm:text-7xl">
+            <motion.h1 variants={fadeUp} className="text-gradient font-display mt-5 text-6xl font-bold tracking-tight drop-shadow-[0_4px_28px_rgba(0,0,0,0.75)] sm:text-8xl">
               OE Picks
             </motion.h1>
             <motion.p variants={fadeUp} className="mt-3 max-w-md text-pretty text-neutral-300">
