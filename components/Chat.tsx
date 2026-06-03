@@ -25,10 +25,10 @@ interface Msg { role: "user" | "assistant"; content: string; images?: Img[] }
 interface Conversation { id: string; title: string; messages: Msg[]; updatedAt: number }
 
 const QUICK = [
-  { icon: <TrendingUp className="h-4 w-4" />, label: "What's on the slate?", text: "What's on today's slate and where's the value?" },
-  { icon: <ImageIcon className="h-4 w-4" />, label: "Grade my board", text: "I'm about to upload a PrizePicks board — grade each pick." },
-  { icon: <ClipboardList className="h-4 w-4" />, label: "Review my slip", text: "Review this bet slip and rate the parlay." },
-  { icon: <Layers className="h-4 w-4" />, label: "Best ML value", text: "What's the best moneyline value tonight?" },
+  { icon: <ImageIcon className="h-4 w-4" />, label: "Upload a screenshot", text: "I'm uploading a screenshot of my picks. Grade them for me.", upload: true },
+  { icon: <Layers className="h-4 w-4" />, label: "Grade my parlay", text: "Grade my parlay and tell me which picks to keep and which to drop.", upload: true },
+  { icon: <ClipboardList className="h-4 w-4" />, label: "Review my bets", text: "Review my bets and tell me which ones are worth it.", upload: true },
+  { icon: <TrendingUp className="h-4 w-4" />, label: "Best Money Line Value", text: "What's the best Money Line value tonight?", upload: false },
 ];
 
 function useAutoResize(min: number, max: number) {
@@ -302,14 +302,14 @@ export function Chat({ slateCount, username, isAdmin }: { slateCount: number; us
                   Welcome back, {username}
                 </motion.h1>
                 <motion.p variants={fadeUp} className="mt-3 max-w-md text-pretty text-neutral-300">
-                  Your private betting analyst. Reads the slate, grades your boards, and passes when there&rsquo;s no edge.
+                  Upload your picks and I&rsquo;ll tell you which ones to bet, which to skip, and why.
                 </motion.p>
               </div>
               <motion.div variants={fadeUp} className="mt-9 w-full">{InputBox}</motion.div>
               <motion.div variants={fadeUp} className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 {QUICK.map((q) => (
                   <motion.button key={q.label} whileHover={{ y: -2, scale: 1.04 }} whileTap={{ scale: 0.97 }}
-                    onClick={() => { setInput(q.text); if (q.label === "Grade my board" || q.label === "Review my slip") fileRef.current?.click(); }}
+                    onClick={() => { setInput(q.text); if (q.upload) fileRef.current?.click(); }}
                     className="flex items-center gap-2 rounded-full border border-neutral-700 bg-black/50 px-4 py-2 text-xs text-neutral-300 backdrop-blur-md transition-colors hover:border-sky-500/40 hover:bg-neutral-800 hover:text-white">
                     {q.icon}<span>{q.label}</span>
                   </motion.button>

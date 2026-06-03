@@ -4,29 +4,29 @@ import { Gauge, ScanText, Layers, LineChart, ArrowRight } from "lucide-react";
 const CAPS = [
   {
     Icon: Gauge,
-    title: "Grade your bets",
-    body: "Send a pick or slip and I run it through availability, line value, matchup, rest, situational spots, and stats — win %, confidence, edge rating, unit sizing, and a straight call to pass.",
+    title: "Instant grades",
+    body: "Send your picks and get a clear grade in seconds: which ones to bet, which to skip, and a confidence score for each. No more guessing.",
     theme: "217 91% 45%", // blue
     image: "https://picsum.photos/seed/oe-grade/900/700",
   },
   {
     Icon: ScanText,
-    title: "Read board screenshots",
-    body: "Drop a PrizePicks or Underdog board and I list every player, stat type, and line I can read, then lean More/Less only where it clears threshold. Anything unclear, I flag instead of guessing.",
+    title: "Just upload a screenshot",
+    body: "Snap your PrizePicks or Underdog screen and it reads every pick for you, then tells you which are worth it. Nothing to type in.",
     theme: "160 84% 30%", // emerald
     image: "https://picsum.photos/seed/oe-board/900/700",
   },
   {
     Icon: Layers,
-    title: "Build entries",
-    body: "Want a 2-to-6 pick play? I rank legs by confidence, name the weakest one, and warn on correlation. I won't force a leg just to fill a slip.",
+    title: "Build a stronger ticket",
+    body: "Playing more than one pick? It ranks them best to worst, points out your weakest one, and helps you build a smarter combo.",
     theme: "262 70% 48%", // violet
     image: "https://picsum.photos/seed/oe-entry/900/700",
   },
   {
     Icon: LineChart,
-    title: "Analyze the slate",
-    body: "I work off model win probabilities and de-vigged edges for team moneylines and totals — real numbers, not gut feel.",
+    title: "Backed by real stats",
+    body: "Every call is based on real player and team numbers, not hype, so you can actually trust the advice you're getting.",
     theme: "25 90% 48%", // amber
     image: "https://picsum.photos/seed/oe-slate/900/700",
   },
@@ -36,9 +36,9 @@ export function Capabilities() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div className="text-center">
-        <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">What it does</p>
-        <h2 className="mt-2 font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">Here&rsquo;s what I do for you</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">A real analyst workflow — grading, screenshots, entries, and the slate.</p>
+        <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">Features</p>
+        <h2 className="mt-2 font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">Prime Picks Features</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">Everything Prime Picks does for you, in plain English.</p>
       </div>
 
       <div className="mt-12 grid gap-6 sm:grid-cols-2">
