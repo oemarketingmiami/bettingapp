@@ -71,6 +71,24 @@ Deno.serve(async (req) => {
     inserted = count ?? rows.length;
   }
 
+  // 6) Prune stale UPCOMING games for this sport that are no longer offered by
+  // the provider (cancelled / corrected) so the slate stays accurate. Snapshots
+  // cascade-delete. Past games are left as history.
+  let pruned = 0;
+  const currentIds = games.map((g) => g.external_id);
+  if (currentIds.length) {
+    const { data: del, error: pErr } = await supabase
+      .from("games")
+      .delete()
+      .eq("sport", SPORT)
+      .eq("provider", "the-odds-api")
+      .gt("commence_time", new Date().toISOString())
+      .not("external_id", "in", `(${currentIds.join(",")})`)
+      .select("id");
+    if (pErr) return json({ error: "games_prune", detail: pErr.message }, 500);
+    pruned = del?.length ?? 0;
+  }
+
   return json({
     ok: true,
     sport: SPORT,
@@ -78,6 +96,7 @@ Deno.serve(async (req) => {
     games_upserted: gameRows?.length ?? 0,
     teams_seen: teams.length,
     snapshots_inserted: inserted,
+    stale_games_pruned: pruned,
     odds_api_credits_remaining: creditsRemaining,
   });
 });
