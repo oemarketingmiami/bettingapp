@@ -39,6 +39,13 @@ proactive daily card and an admin dashboard. Single brand: **Prime Picks**.
   (Odds/Sharp/balldontlie live as Supabase function secrets / local scripts, not Vercel.)
 - **Supabase secrets** (functions): THE_ODDS_API_KEY, ANTHROPIC_API_KEY, MODEL_SERVICE_URL.
 
+## Daily automation (cron — LIVE)
+pg_cron + pg_net run the pipeline automatically (secrets in Supabase **Vault**: `project_url`,
+`service_role_key`). Jobs: **`prime-fetch-odds`** every 6h (`0 */6 * * *`, credit-safe), **`prime-generate-card`**
+daily 23:00 UTC (`0 23 * * *`). `generate-card` with no `?date` auto-picks the next upcoming slate.
+`fetch-odds` prunes stale upcoming games each run. Reconfigure: edit + rerun `scripts/setupCron.mts`
+(needs `DATABASE_URL`, `SB_URL`, `SB_SERVICE_ROLE_KEY` env). Monitor: `select * from cron.job_run_details order by start_time desc`.
+
 ## ROADMAP (next, OE's list)
 1. **Update APIs for data** — current-season player logs/injuries need a paid tier (API-SPORTS
    free caps at 2022-2024; `SEASON` in `lib/props.ts` is the one-line bump). Consider The Odds API

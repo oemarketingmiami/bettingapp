@@ -33,11 +33,21 @@ async function handle(req: Request): Promise<Response> {
   const modelUrl = Deno.env.get("MODEL_SERVICE_URL");
   if (!modelUrl) return json({ error: "MODEL_SERVICE_URL not set" }, 500);
 
-  // Slate date: ?date=YYYY-MM-DD, else today (UTC).
-  const dateParam = new URL(req.url).searchParams.get("date");
-  const slateDate = dateParam ?? new Date().toISOString().slice(0, 10);
-
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
+
+  // Slate date: ?date=YYYY-MM-DD, else the date of the NEXT upcoming game
+  // (so the daily cron grabs the right slate without computing a date).
+  let slateDate = new URL(req.url).searchParams.get("date") ?? "";
+  if (!slateDate) {
+    const { data: nextGame } = await supabase
+      .from("games")
+      .select("commence_time")
+      .gte("commence_time", new Date(Date.now() - 6 * 3600_000).toISOString())
+      .order("commence_time")
+      .limit(1)
+      .maybeSingle();
+    slateDate = (nextGame?.commence_time ?? new Date().toISOString()).slice(0, 10);
+  }
 
   // 1) Games for the slate.
   const dayStart = `${slateDate}T00:00:00Z`;
