@@ -105,7 +105,7 @@ export function Hero() {
 
         <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.12 }}
           className="mx-auto mt-6 max-w-xl text-lg text-slate-600">
-          Reads the slate, grades your PrizePicks and Underdog boards, finds real edges, and tells you to pass when there isn&rsquo;t one.
+          Upload a screenshot of your PrizePicks or Underdog picks and get an instant, easy-to-read grade: which bets are worth it, which to skip, and the real stats behind every call.
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.2 }} className="mt-9">
