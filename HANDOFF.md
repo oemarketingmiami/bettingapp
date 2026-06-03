@@ -46,6 +46,17 @@ daily 23:00 UTC (`0 23 * * *`). `generate-card` with no `?date` auto-picks the n
 `fetch-odds` prunes stale upcoming games each run. Reconfigure: edit + rerun `scripts/setupCron.mts`
 (needs `DATABASE_URL`, `SB_URL`, `SB_SERVICE_ROLE_KEY` env). Monitor: `select * from cron.job_run_details order by start_time desc`.
 
+## Model accuracy (calibration — IN PROGRESS)
+- **Elo is now calibrated.** `services/model/scripts/calibrate.py` backtests Elo over 3 seasons
+  (balldontlie, free; note 5 req/min limit so it's slow) → fits isotonic regression → saves
+  `services/model/app/calibration_data.json`, loaded by `app/calibration.py` and applied in
+  `/v1/predict`. Result: raw 0.70 → 0.59 (Elo was overconfident). Brier 0.2177→0.2108. Refresh by
+  re-running the script and redeploying the Render service. `model_version` = `elo-cal-v1`.
+- **Market anchoring** available: `MODEL_MARKET_ANCHOR` (0–1, default 0) blends the model toward the
+  de-vigged market in `/v1/edge`. Set ~0.3 on Render for more conservative edges.
+- **Still TODO for #1:** `settle-results` job (log final scores + grade live predictions) to build a
+  real flywheel so calibration uses live outcomes, not just backtests.
+
 ## ROADMAP (next, OE's list)
 1. **Update APIs for data** — current-season player logs/injuries need a paid tier (API-SPORTS
    free caps at 2022-2024; `SEASON` in `lib/props.ts` is the one-line bump). Consider The Odds API

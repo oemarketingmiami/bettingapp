@@ -14,8 +14,14 @@ class Settings(BaseSettings):
     # INSTRUCTIONS.md §6: no positive edge -> no bet. Keep at 0.0 to mean "any +edge".
     min_edge: float = 0.0
 
+    # Market anchoring: pull the model probability this fraction toward the
+    # de-vigged market before computing edge (0 = pure model, 1 = trust market
+    # fully). The market is a strong calibrated baseline, so a little anchoring
+    # shrinks over-confident edges. 0.0 keeps prior behavior.
+    market_anchor: float = 0.0
+
     # Identifies which model produced a probability, so cards are traceable.
-    model_version: str = "elo-v0"
+    model_version: str = "elo-cal-v1"
 
 
 settings = Settings()

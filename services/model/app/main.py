@@ -68,9 +68,12 @@ def compute_edge(req: EdgeRequest) -> EdgeResponse:
     implied = [odds.decimal_to_implied(d) for d in decimals]
     fair = odds.remove_vig(implied)
 
+    w = settings.market_anchor
     outcomes = []
     for o, dec, imp, no_vig in zip(req.outcomes, decimals, implied, fair):
-        e = edge_mod.edge(o.model_prob, no_vig)
+        # Anchor the model toward the de-vigged market (w=0 keeps pure model).
+        prob = (1 - w) * o.model_prob + w * no_vig
+        e = edge_mod.edge(prob, no_vig)
         outcomes.append(
             OutcomeOut(
                 label=o.label,
@@ -79,7 +82,7 @@ def compute_edge(req: EdgeRequest) -> EdgeResponse:
                 implied_prob=imp,
                 no_vig_prob=no_vig,
                 edge=e,
-                ev_per_unit=edge_mod.expected_value(o.model_prob, dec),
+                ev_per_unit=edge_mod.expected_value(prob, dec),
                 recommend=e > settings.min_edge,
             )
         )
