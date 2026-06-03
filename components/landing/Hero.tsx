@@ -97,7 +97,7 @@ export function Hero() {
         </motion.div>
 
         <motion.h1 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.05 }}
-          className="font-display text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl md:text-7xl">
+          className="font-display text-balance text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl md:text-7xl">
           Bet smarter,
           <br />
           <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">not harder.</span>
