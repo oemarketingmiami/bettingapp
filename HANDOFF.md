@@ -41,8 +41,9 @@ proactive daily card and an admin dashboard. Single brand: **Prime Picks**.
 
 ## Daily automation (cron — LIVE)
 pg_cron + pg_net run the pipeline automatically (secrets in Supabase **Vault**: `project_url`,
-`service_role_key`). Jobs: **`prime-fetch-odds`** every 6h (`0 */6 * * *`, credit-safe), **`prime-generate-card`**
-daily 23:00 UTC (`0 23 * * *`). `generate-card` with no `?date` auto-picks the next upcoming slate.
+`service_role_key`). Jobs: **`prime-fetch-odds`** every 6h (`0 */6 * * *`, credit-safe),
+**`prime-settle-results`** daily 14:00 UTC (scores + Elo roll), **`prime-generate-card`** daily
+23:00 UTC. `generate-card` with no `?date` auto-picks the next upcoming slate.
 `fetch-odds` prunes stale upcoming games each run. Reconfigure: edit + rerun `scripts/setupCron.mts`
 (needs `DATABASE_URL`, `SB_URL`, `SB_SERVICE_ROLE_KEY` env). Monitor: `select * from cron.job_run_details order by start_time desc`.
 
@@ -54,8 +55,11 @@ daily 23:00 UTC (`0 23 * * *`). `generate-card` with no `?date` auto-picks the n
   re-running the script and redeploying the Render service. `model_version` = `elo-cal-v1`.
 - **Market anchoring** available: `MODEL_MARKET_ANCHOR` (0–1, default 0) blends the model toward the
   de-vigged market in `/v1/edge`. Set ~0.3 on Render for more conservative edges.
-- **Still TODO for #1:** `settle-results` job (log final scores + grade live predictions) to build a
-  real flywheel so calibration uses live outcomes, not just backtests.
+- **settle-results DONE (flywheel live):** `generate-card` writes a `predictions` row per game
+  (model prob, market prob, edge). The `settle-results` edge function pulls final scores
+  (balldontlie), marks games final, grades predictions, and **rolls team Elo forward** so ratings
+  stay current. Cron `prime-settle-results` daily 14:00 UTC. Next: periodically re-fit calibration
+  using settled `predictions` (live data) in addition to the backtest.
 
 ## ROADMAP (next, OE's list)
 1. **Update APIs for data** — current-season player logs/injuries need a paid tier (API-SPORTS

@@ -90,6 +90,19 @@ async function handle(req: Request): Promise<Response> {
       { label: g.away_team, model_prob: p.away_win_prob, american_odds: away.price_american },
     ]);
     enriched.push({ game: g, model: p, market: edge });
+
+    // Record the prediction (the flywheel: settle-results fills in the outcome).
+    const homeOut = edge.outcomes.find((o) => o.label === g.home_team);
+    await supabase.from("predictions").upsert({
+      game_id: g.id,
+      sport: g.sport,
+      home_team: g.home_team,
+      away_team: g.away_team,
+      commence_time: g.commence_time,
+      model_home_prob: p.home_win_prob,
+      no_vig_home_prob: homeOut?.no_vig_prob ?? null,
+      home_edge: homeOut?.edge ?? null,
+    }, { onConflict: "game_id" });
   }
 
   // 4) Hand to Claude with the analyst prompt + schema.

@@ -5,6 +5,7 @@ import pg from "pg";
 
 const FETCH_SCHEDULE = "0 */6 * * *";   // every 6h (credit-safe on the free Odds tier)
 const CARD_SCHEDULE = "0 23 * * *";     // once daily ~before tip (UTC)
+const SETTLE_SCHEDULE = "0 14 * * *";   // daily, after games finish (UTC) -> scores + Elo roll
 
 const fnCall = (path: string) => `
   select net.http_post(
@@ -36,10 +37,11 @@ async function main() {
   await upsertSecret(c, "service_role_key", SB_SERVICE_ROLE_KEY);
 
   // reschedule cleanly
-  for (const name of ["prime-fetch-odds", "prime-generate-card"]) {
+  for (const name of ["prime-fetch-odds", "prime-generate-card", "prime-settle-results"]) {
     await c.query("select cron.unschedule(jobid) from cron.job where jobname = $1", [name]);
   }
   await c.query("select cron.schedule($1, $2, $3)", ["prime-fetch-odds", FETCH_SCHEDULE, fnCall("fetch-odds")]);
+  await c.query("select cron.schedule($1, $2, $3)", ["prime-settle-results", SETTLE_SCHEDULE, fnCall("settle-results")]);
   await c.query("select cron.schedule($1, $2, $3)", ["prime-generate-card", CARD_SCHEDULE, fnCall("generate-card")]);
 
   const jobs = await c.query("select jobname, schedule, active from cron.job where jobname like 'prime-%' order by jobname");
