@@ -6,10 +6,11 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swa
 const display = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "OE Picks",
-  description: "Personal sports analytics + daily card",
+  title: "Prime Picks — AI sports betting analyst",
+  description: "Reads the slate, grades your boards, finds real edges, and passes when there isn't one.",
   manifest: "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "OE Picks" },
+  icons: { icon: "/logo.png", apple: "/logo.png" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Prime Picks" },
 };
 
 export const viewport: Viewport = {

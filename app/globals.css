@@ -73,3 +73,15 @@ body {
   75%, 100% { transform: scale(2.2); opacity: 0; }
 }
 .live-ping { animation: ping-dot 1.6s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+/* Testimonials marquee */
+@keyframes marquee-x {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 0.625rem)); }
+}
+.animate-marquee { animation: marquee-x 40s linear infinite; }
+.marquee-group:hover .animate-marquee { animation-play-state: paused; }
+
+/* hide scrollbar (winners carousel) */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

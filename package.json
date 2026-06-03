@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
+    "@iconify/react": "^6.0.2",
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.45.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
@@ -25,6 +27,7 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

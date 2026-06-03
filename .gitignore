@@ -19,3 +19,8 @@ services/model/.venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local source assets (copied into public/ where needed)
+MY STUFF/
+*.exe
+*.msi

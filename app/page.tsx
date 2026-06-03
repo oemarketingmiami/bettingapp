@@ -1,42 +1,35 @@
-import { adminDb } from "@/lib/db";
-import { Chat } from "@/components/Chat";
+import { LandingHeader } from "@/components/landing/LandingHeader";
+import { Hero } from "@/components/landing/Hero";
+import { Capabilities } from "@/components/landing/Capabilities";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { Winners } from "@/components/landing/Winners";
+import { Testimonials } from "@/components/landing/Testimonials";
+import { Pricing } from "@/components/landing/Pricing";
+import { Footer } from "@/components/landing/Footer";
 
-export const dynamic = "force-dynamic";
-
-export default async function Home() {
-  try {
-    const nowIso = new Date(Date.now() - 6 * 3600_000).toISOString();
-    const { count, error } = await adminDb()
-      .from("games")
-      .select("id", { count: "exact", head: true })
-      .gte("commence_time", nowIso);
-    if (error) throw new Error("Supabase query failed: " + error.message);
-    return <Chat slateCount={count ?? 0} />;
-  } catch (e) {
-    return <SetupError message={e instanceof Error ? e.message : String(e)} />;
-  }
-}
-
-// Diagnostic fallback so a misconfigured deploy shows the cause instead of a
-// blank 500. Reports only whether each var is PRESENT — never its value.
-function SetupError({ message }: { message: string }) {
-  const present = (k: string) => (process.env[k] && process.env[k]!.length > 0 ? "✓ set" : "✗ MISSING");
+export default function Landing() {
   return (
-    <main className="mx-auto max-w-xl px-6 py-16">
-      <h1 className="font-display text-2xl font-bold text-white">Setup needed</h1>
-      <p className="mt-2 text-zinc-400">
-        The app loaded but couldn&rsquo;t reach its data. Usually a missing Vercel environment
-        variable — add it under Settings → Environment Variables (Production), then redeploy.
-      </p>
-      <div className="mt-6 rounded-lg bg-white/5 p-4 text-sm ring-1 ring-white/10">
-        <div className="font-medium text-zinc-300">Environment variables</div>
-        <ul className="mt-2 space-y-1 font-mono text-zinc-200">
-          <li>SUPABASE_URL: {present("SUPABASE_URL")}</li>
-          <li>SUPABASE_SERVICE_ROLE_KEY: {present("SUPABASE_SERVICE_ROLE_KEY")}</li>
-          <li>ANTHROPIC_API_KEY: {present("ANTHROPIC_API_KEY")}</li>
-        </ul>
+    <div className="relative min-h-screen text-slate-900 [color-scheme:light]">
+      {/* Page-wide soft gradient backdrop so sections pop instead of flat white */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-white">
+        <div className="absolute left-1/2 top-[3%] h-[620px] w-[1000px] -translate-x-1/2 rounded-full opacity-80"
+          style={{ background: "radial-gradient(closest-side, rgba(37,99,235,0.13), transparent)" }} />
+        <div className="absolute right-[-12%] top-[34%] h-[620px] w-[620px] rounded-full opacity-70"
+          style={{ background: "radial-gradient(closest-side, rgba(99,102,241,0.12), transparent)" }} />
+        <div className="absolute left-[-12%] top-[58%] h-[620px] w-[620px] rounded-full opacity-70"
+          style={{ background: "radial-gradient(closest-side, rgba(56,189,248,0.12), transparent)" }} />
+        <div className="absolute right-[2%] top-[82%] h-[560px] w-[620px] rounded-full opacity-70"
+          style={{ background: "radial-gradient(closest-side, rgba(37,99,235,0.11), transparent)" }} />
       </div>
-      <p className="mt-4 break-words text-xs text-zinc-500">Detail: {message}</p>
-    </main>
+
+      <LandingHeader />
+      <Hero />
+      <Capabilities />
+      <HowItWorks />
+      <Winners />
+      <Testimonials />
+      <Pricing />
+      <Footer />
+    </div>
   );
 }

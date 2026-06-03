@@ -7,7 +7,7 @@ const CARD_TYPE_LABEL: Record<string, string> = {
 
 export function BetCard({ pick }: { pick: Pick }) {
   return (
-    <div className="rounded-xl bg-white/[0.03] p-4 ring-1 ring-inset ring-white/10">
+    <div className="rounded-xl bg-white/[0.03] p-4 ring-1 ring-inset ring-white/10 transition-all duration-300 hover:-translate-y-0.5 hover:ring-blue-400/30 hover:shadow-[0_18px_44px_-22px_rgba(37,99,235,0.6)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs uppercase tracking-wide text-zinc-500">

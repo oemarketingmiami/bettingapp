@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Paperclip, ArrowUpIcon, Image as ImageIcon, ClipboardList, TrendingUp, Layers, Plus, Trash2, MessageSquare, PanelLeft } from "lucide-react";
+import { Paperclip, ArrowUpIcon, Image as ImageIcon, ClipboardList, TrendingUp, Layers, Plus, Trash2, MessageSquare, PanelLeft, PanelLeftClose, Settings, LogOut, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { Markdown } from "@/components/Markdown";
+import { PicksCard, extractCard } from "@/components/PicksCard";
+import { LogoutButton } from "@/components/LogoutButton";
 
 const BG = "https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/ruixen_moon_2.png";
 const LS_KEY = "oe_picks_chats_v1";
@@ -48,7 +51,7 @@ function makeTitle(m: Msg): string {
   return "New chat";
 }
 
-export function Chat({ slateCount }: { slateCount: number }) {
+export function Chat({ slateCount, username, isAdmin }: { slateCount: number; username: string; isAdmin?: boolean }) {
   const [chats, setChats] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -198,10 +201,22 @@ export function Chat({ slateCount }: { slateCount: number }) {
           sidebarOpen ? "translate-x-0 sm:w-64" : "-translate-x-full sm:w-0 sm:border-r-0"
         )}>
           <div className="flex h-full w-64 flex-col p-3">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="flex items-center gap-2 px-1 text-sm font-semibold text-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="Prime Picks" className="h-6 w-6 rounded-md" /> Prime Picks
+              </span>
+              <button onClick={() => setSidebarOpen(false)} title="Collapse sidebar"
+                className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-blue-500/10 hover:text-white">
+                <PanelLeftClose className="h-5 w-5" />
+              </button>
+            </div>
+
             <button onClick={newChat}
               className="flex items-center justify-center gap-2 rounded-lg border border-blue-700/50 bg-blue-600/20 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600/30">
               <Plus className="h-4 w-4" /> New chat
             </button>
+
             <div className="mt-3 flex-1 space-y-1 overflow-y-auto">
               {chats.length === 0 && <p className="px-2 py-4 text-center text-xs text-zinc-500">No chats yet</p>}
               {chats.map((c) => (
@@ -217,7 +232,20 @@ export function Chat({ slateCount }: { slateCount: number }) {
                 </div>
               ))}
             </div>
-            <p className="px-2 pt-2 text-[10px] text-zinc-600">History is stored on this device.</p>
+
+            <div className="mt-2 space-y-1 border-t border-blue-900/40 pt-2">
+              {isAdmin && (
+                <Link href="/admin" className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-amber-300 transition-colors hover:bg-amber-500/10">
+                  <ShieldCheck className="h-4 w-4" /> Admin
+                </Link>
+              )}
+              <Link href="/settings" className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-zinc-300 transition-colors hover:bg-blue-500/10 hover:text-white">
+                <Settings className="h-4 w-4" /> Settings
+              </Link>
+              <LogoutButton className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-zinc-300 transition-colors hover:bg-blue-500/10 hover:text-white">
+                <LogOut className="h-4 w-4" /> Log out
+              </LogoutButton>
+            </div>
           </div>
         </aside>
 
@@ -226,10 +254,14 @@ export function Chat({ slateCount }: { slateCount: number }) {
           <header className="z-10 w-full">
             <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
-                <button onClick={() => setSidebarOpen((v) => !v)} className="text-neutral-300 hover:text-white" title="Toggle chats">
-                  <PanelLeft className="h-5 w-5" />
-                </button>
-                <span className="font-display text-lg font-semibold text-white drop-shadow">OE Picks</span>
+                {!sidebarOpen && (
+                  <button onClick={() => setSidebarOpen(true)} className="text-neutral-300 hover:text-white" title="Open sidebar">
+                    <PanelLeft className="h-5 w-5" />
+                  </button>
+                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="Prime Picks" className="h-7 w-7 rounded-md" />
+                <span className="font-display text-lg font-semibold text-white drop-shadow">Prime Picks</span>
               </div>
               <a href="/card" className="text-xs text-neutral-300 hover:text-white">Today&rsquo;s card →</a>
             </div>
@@ -240,6 +272,17 @@ export function Chat({ slateCount }: { slateCount: number }) {
               className="z-10 flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 pb-[16vh]">
               <div className="relative flex flex-col items-center text-center">
                 <div className="hero-glow pointer-events-none absolute -top-10 h-48 w-[28rem] max-w-[90vw] rounded-full bg-indigo-500/25 blur-3xl" />
+                {/* fades in once (via fadeUp); inner layer floats gently in a loop */}
+                <motion.div variants={fadeUp} className="relative mb-5">
+                  <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-indigo-500/25 blur-2xl" />
+                  <motion.div
+                    animate={{ y: [0, -6, 0, 6, 0], rotate: [0, 2, 0, -2, 0] }}
+                    transition={{ duration: 6, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+                    className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/logo-full.png" alt="Prime Picks" className="h-24 w-24 rounded-2xl shadow-2xl ring-1 ring-white/10" />
+                  </motion.div>
+                </motion.div>
                 <motion.div variants={fadeUp} className="relative">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-neutral-300 backdrop-blur-md">
                     {slateCount > 0 ? (
@@ -255,8 +298,8 @@ export function Chat({ slateCount }: { slateCount: number }) {
                     )}
                   </span>
                 </motion.div>
-                <motion.h1 variants={fadeUp} className="text-gradient font-display mt-5 text-6xl font-bold tracking-tight drop-shadow-[0_4px_28px_rgba(0,0,0,0.75)] sm:text-8xl">
-                  OE Picks
+                <motion.h1 variants={fadeUp} className="font-display mt-5 text-4xl font-bold tracking-tight text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.6)] sm:text-5xl">
+                  Welcome back, {username}
                 </motion.h1>
                 <motion.p variants={fadeUp} className="mt-3 max-w-md text-pretty text-neutral-300">
                   Your private betting analyst. Reads the slate, grades your boards, and passes when there&rsquo;s no edge.
@@ -280,20 +323,28 @@ export function Chat({ slateCount }: { slateCount: number }) {
                   {messages.map((m, i) => (
                     <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}
                       className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                      <div className={cn("max-w-[85%] rounded-2xl px-4 py-2.5 backdrop-blur-md",
-                        m.role === "user" ? "bg-sky-600/30 ring-1 ring-inset ring-sky-400/30" : "bg-black/55 ring-1 ring-inset ring-white/10")}>
-                        {m.images?.length ? (
-                          <div className="mb-2 flex flex-wrap gap-2">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            {m.images.map((img, j) => <img key={j} src={img.preview} alt="upload" className="max-h-44 rounded-lg ring-1 ring-white/15" />)}
-                          </div>
-                        ) : null}
-                        {m.role === "assistant" ? (
-                          m.content ? <Markdown>{m.content}</Markdown> : <span className="text-sm text-zinc-400">{streaming && i === messages.length - 1 ? "…" : ""}</span>
-                        ) : (
+                      {m.role === "user" ? (
+                        <div className="max-w-[85%] rounded-2xl bg-sky-600/30 px-4 py-2.5 ring-1 ring-inset ring-sky-400/30 backdrop-blur-md">
+                          {m.images?.length ? (
+                            <div className="mb-2 flex flex-wrap gap-2">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              {m.images.map((img, j) => <img key={j} src={img.preview} alt="upload" className="max-h-44 rounded-lg ring-1 ring-white/15" />)}
+                            </div>
+                          ) : null}
                           <div className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-100">{m.content}</div>
-                        )}
-                      </div>
+                        </div>
+                      ) : !m.content ? (
+                        <div className="rounded-2xl bg-black/55 px-4 py-2.5 text-sm text-zinc-400 ring-1 ring-inset ring-white/10 backdrop-blur-md">{streaming && i === messages.length - 1 ? "…" : ""}</div>
+                      ) : (() => {
+                        const { text, card, pending } = extractCard(m.content);
+                        return (
+                          <div className="flex max-w-[85%] flex-col gap-2">
+                            {text && <div className="rounded-2xl bg-black/55 px-4 py-2.5 ring-1 ring-inset ring-white/10 backdrop-blur-md"><Markdown>{text}</Markdown></div>}
+                            {pending && <div className="px-1 text-xs text-zinc-500">Building recommendation card…</div>}
+                            {card && <PicksCard card={card} />}
+                          </div>
+                        );
+                      })()}
                     </motion.div>
                   ))}
                   <div ref={endRef} />
