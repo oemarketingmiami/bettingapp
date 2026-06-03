@@ -54,7 +54,7 @@ export function Chat({ slateCount }: { slateCount: number }) {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Img[]>([]);
   const [streaming, setStreaming] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const { ref: taRef, adjust } = useAutoResize(48, 150);
   const endRef = useRef<HTMLDivElement>(null);
@@ -66,6 +66,8 @@ export function Chat({ slateCount }: { slateCount: number }) {
     setLoaded(true);
   }, []);
   useEffect(() => { if (loaded) localStorage.setItem(LS_KEY, JSON.stringify(chats)); }, [chats, loaded]);
+  // Start collapsed on small screens so the sidebar doesn't cover the chat on load.
+  useEffect(() => { if (typeof window !== "undefined" && window.innerWidth < 640) setSidebarOpen(false); }, []);
 
   const active = chats.find((c) => c.id === activeId) ?? null;
   const messages = active?.messages ?? [];
@@ -190,14 +192,14 @@ export function Chat({ slateCount }: { slateCount: number }) {
       {sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 sm:hidden" onClick={() => setSidebarOpen(false)} />}
 
       <div className="relative z-10 flex h-full">
-        {/* Sidebar */}
+        {/* Sidebar — dark blue, collapsible on every screen */}
         <aside className={cn(
-          "fixed inset-y-0 left-0 z-30 w-64 transform border-r border-white/10 bg-zinc-950/85 backdrop-blur-xl transition-transform duration-200 sm:static sm:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-30 w-64 overflow-hidden border-r border-blue-900/40 bg-[#0a1024]/90 backdrop-blur-xl transition-all duration-200 sm:static sm:translate-x-0",
+          sidebarOpen ? "translate-x-0 sm:w-64" : "-translate-x-full sm:w-0 sm:border-r-0"
         )}>
-          <div className="flex h-full flex-col p-3">
+          <div className="flex h-full w-64 flex-col p-3">
             <button onClick={newChat}
-              className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10">
+              className="flex items-center justify-center gap-2 rounded-lg border border-blue-700/50 bg-blue-600/20 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600/30">
               <Plus className="h-4 w-4" /> New chat
             </button>
             <div className="mt-3 flex-1 space-y-1 overflow-y-auto">
@@ -205,7 +207,7 @@ export function Chat({ slateCount }: { slateCount: number }) {
               {chats.map((c) => (
                 <div key={c.id} onClick={() => selectChat(c.id)}
                   className={cn("group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm",
-                    c.id === activeId ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5")}>
+                    c.id === activeId ? "bg-blue-600/25 text-white" : "text-zinc-300 hover:bg-blue-500/10")}>
                   <MessageSquare className="h-4 w-4 shrink-0 text-zinc-500" />
                   <span className="flex-1 truncate">{c.title}</span>
                   <button onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }}
@@ -224,7 +226,7 @@ export function Chat({ slateCount }: { slateCount: number }) {
           <header className="z-10 w-full">
             <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
-                <button onClick={() => setSidebarOpen((v) => !v)} className="text-neutral-300 hover:text-white sm:hidden" title="Chats">
+                <button onClick={() => setSidebarOpen((v) => !v)} className="text-neutral-300 hover:text-white" title="Toggle chats">
                   <PanelLeft className="h-5 w-5" />
                 </button>
                 <span className="font-display text-lg font-semibold text-white drop-shadow">OE Picks</span>
