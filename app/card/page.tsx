@@ -108,7 +108,7 @@ function Shell({ quality, children }: { quality?: Card["slate_quality"]; childre
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-[#0a0b0f] text-zinc-100">
       {/* brand gradient backdrop */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/2 top-[-10%] h-[520px] w-[820px] -translate-x-1/2 rounded-full opacity-60" style={{ background: "radial-gradient(closest-side, rgba(37,99,235,0.18), transparent)" }} />
         <div className="absolute right-[-10%] top-[45%] h-[520px] w-[520px] rounded-full opacity-50" style={{ background: "radial-gradient(closest-side, rgba(99,102,241,0.15), transparent)" }} />
       </div>

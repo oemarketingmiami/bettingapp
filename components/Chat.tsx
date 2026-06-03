@@ -192,12 +192,12 @@ export function Chat({ slateCount, username, isAdmin }: { slateCount: number; us
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url('${BG}')`, backgroundAttachment: "fixed" }}>
       {/* mobile backdrop */}
-      {sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 sm:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && <div className="absolute inset-0 z-20 bg-black/60 sm:hidden" onClick={() => setSidebarOpen(false)} />}
 
       <div className="relative z-10 flex h-full">
         {/* Sidebar — dark blue, collapsible on every screen */}
         <aside className={cn(
-          "fixed inset-y-0 left-0 z-30 w-64 overflow-hidden border-r border-blue-900/40 bg-[#0a1024]/90 backdrop-blur-xl transition-all duration-200 sm:static sm:translate-x-0",
+          "absolute inset-y-0 left-0 z-30 w-64 overflow-hidden border-r border-blue-900/40 bg-[#0a1024]/95 backdrop-blur-xl transition-all duration-200 sm:static sm:translate-x-0",
           sidebarOpen ? "translate-x-0 sm:w-64" : "-translate-x-full sm:w-0 sm:border-r-0"
         )}>
           <div className="flex h-full w-64 flex-col p-3">

@@ -43,7 +43,7 @@ export default async function AdminPage() {
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-[#0a0b0f] text-zinc-100">
-      <div className="pointer-events-none absolute inset-0 -z-10">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/2 top-[-10%] h-[480px] w-[820px] -translate-x-1/2 rounded-full opacity-50" style={{ background: "radial-gradient(closest-side, rgba(37,99,235,0.16), transparent)" }} />
         <div className="absolute right-[-10%] top-[40%] h-[480px] w-[480px] rounded-full opacity-40" style={{ background: "radial-gradient(closest-side, rgba(16,185,129,0.12), transparent)" }} />
       </div>
