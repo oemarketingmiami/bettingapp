@@ -20,10 +20,15 @@ proactive daily card and an admin dashboard. Single brand: **Prime Picks**.
 - **Chat (`/api/chat`):** streaming + vision. Board upload → extract props → API-SPORTS game
   logs (cached) → hit-rate vs line → graded reply + a visual **recommendation card**.
 - **Daily card (`/card`):** generate-card → Claude Opus + pick_schema → Postgres → UI.
-- **Landing (`/`):** hero (cursor-repel sportsbook logos, waitlist form → `waitlist` table),
-  capabilities, how-it-works video, **winners carousel** (cropped phone shots), testimonials, pricing.
+- **Landing (`/`):** headline "Bet smarter, not harder"; hero (cursor-repel sportsbook logos in
+  `public/headericons`, waitlist form → `waitlist` table), **Prime Picks Features** cards (bg images
+  in `public/features`), how-it-works video, **winners carousel** (`public/wins`, cropped phones),
+  testimonials, pricing. Copy is plain-English (no betting jargon).
 - **Admin (`/admin`):** gated to super-admins (`marganonoirazan@gmail.com`, `bmgaccident@gmail.com`)
   + DB-managed admins. KPIs, signup charts, plans, recent waitlist, add/remove admins.
+- **Mobile:** `overflow-x: clip` on html/body kills sideways scroll; responsive throughout (mobile
+  nav menu, collapsible sidebar, stacked grids). Not yet device-QA'd end-to-end.
+- **Social preview:** OG/Twitter image = `public/logo-full.png` (pp.png). Favicon = `logo.png`.
 
 ## Env vars
 - **Local** `.env.local` (gitignored): ANTHROPIC, SUPABASE_URL/ANON/SERVICE_ROLE,
@@ -52,9 +57,10 @@ proactive daily card and an admin dashboard. Single brand: **Prime Picks**.
 ## Gotchas
 - **GitHub:** `gh` has two accounts; pushes MUST use `oemarketingmiami` (else 404). Git author
   email is set to the noreply that Vercel accepts (Hobby plan blocks unrecognized authors).
-- **Domain change:** whenever the app URL changes (e.g., buying a domain), add it to
-  **Supabase → Auth → URL Configuration → Redirect URLs** (`https://NEWDOMAIN/**`) and Site URL,
-  or sign-in breaks. Google OAuth redirect points at Supabase's callback, so it's unaffected.
+- **Domain change:** whenever the app URL changes (e.g., buying a domain), do BOTH:
+  (1) **Supabase → Auth → URL Configuration → Redirect URLs** (`https://NEWDOMAIN/**`) + Site URL,
+  or sign-in breaks; (2) update `SITE_URL` in `app/layout.tsx` so the OG/social preview image
+  resolves to the new domain. Google OAuth redirect points at Supabase's callback, unaffected.
 - **Migrations:** direct DB host is IPv6-only; use the **session pooler**
   `postgres.cqmwvfwuerywwrqxnxdd@aws-1-us-east-1.pooler.supabase.com:5432` via `supabase db push --db-url`.
 - **Supabase:** legacy JWT anon/service_role keys (not the new format) — keep code on legacy.
