@@ -7,28 +7,28 @@ const CAPS = [
     title: "Instant grades",
     body: "Send your picks and get a clear grade in seconds: which ones to bet, which to skip, and a confidence score for each. No more guessing.",
     theme: "217 91% 45%", // blue
-    image: "https://picsum.photos/seed/oe-grade/900/700",
+    image: "/features/1.png",
   },
   {
     Icon: ScanText,
     title: "Just upload a screenshot",
     body: "Snap your PrizePicks or Underdog screen and it reads every pick for you, then tells you which are worth it. Nothing to type in.",
     theme: "160 84% 30%", // emerald
-    image: "https://picsum.photos/seed/oe-board/900/700",
+    image: "/features/2.png",
   },
   {
     Icon: Layers,
     title: "Build a stronger ticket",
     body: "Playing more than one pick? It ranks them best to worst, points out your weakest one, and helps you build a smarter combo.",
     theme: "262 70% 48%", // violet
-    image: "https://picsum.photos/seed/oe-entry/900/700",
+    image: "/features/3.png",
   },
   {
     Icon: LineChart,
     title: "Backed by real stats",
     body: "Every call is based on real player and team numbers, not hype, so you can actually trust the advice you're getting.",
     theme: "25 90% 48%", // amber
-    image: "https://picsum.photos/seed/oe-slate/900/700",
+    image: "/features/4.png",
   },
 ];
 
