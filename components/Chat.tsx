@@ -4,9 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Paperclip, ArrowUpIcon, Image as ImageIcon, ClipboardList, TrendingUp, Layers } from "lucide-react";
+import { Paperclip, ArrowUpIcon, Image as ImageIcon, ClipboardList, TrendingUp, Layers, Plus, Trash2, MessageSquare, PanelLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { Markdown } from "@/components/Markdown";
+
+const BG = "https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/ruixen_moon_2.png";
+const LS_KEY = "oe_picks_chats_v1";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -14,10 +17,16 @@ const fadeUp = {
 };
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } } };
 
-const BG = "https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/ruixen_moon_2.png";
-
 interface Img { media_type: string; data: string; preview: string }
 interface Msg { role: "user" | "assistant"; content: string; images?: Img[] }
+interface Conversation { id: string; title: string; messages: Msg[]; updatedAt: number }
+
+const QUICK = [
+  { icon: <TrendingUp className="h-4 w-4" />, label: "What's on the slate?", text: "What's on today's slate and where's the value?" },
+  { icon: <ImageIcon className="h-4 w-4" />, label: "Grade my board", text: "I'm about to upload a PrizePicks board — grade each pick." },
+  { icon: <ClipboardList className="h-4 w-4" />, label: "Review my slip", text: "Review this bet slip and rate the parlay." },
+  { icon: <Layers className="h-4 w-4" />, label: "Best ML value", text: "What's the best moneyline value tonight?" },
+];
 
 function useAutoResize(min: number, max: number) {
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -32,23 +41,44 @@ function useAutoResize(min: number, max: number) {
   return { ref, adjust };
 }
 
-const QUICK = [
-  { icon: <TrendingUp className="h-4 w-4" />, label: "What's on the slate?", text: "What's on today's slate and where's the value?" },
-  { icon: <ImageIcon className="h-4 w-4" />, label: "Grade my board", text: "I'm about to upload a PrizePicks board — grade each pick." },
-  { icon: <ClipboardList className="h-4 w-4" />, label: "Review my slip", text: "Review this bet slip and rate the parlay." },
-  { icon: <Layers className="h-4 w-4" />, label: "Best ML value", text: "What's the best moneyline value tonight?" },
-];
+function makeTitle(m: Msg): string {
+  const t = m.content?.trim();
+  if (t) return t.length > 42 ? t.slice(0, 42) + "…" : t;
+  if (m.images?.length) return "Image analysis";
+  return "New chat";
+}
 
 export function Chat({ slateCount }: { slateCount: number }) {
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [chats, setChats] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Img[]>([]);
   const [streaming, setStreaming] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const { ref: taRef, adjust } = useAutoResize(48, 150);
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streaming]);
+  // Load / persist history (localStorage — private per device).
+  useEffect(() => {
+    try { const raw = localStorage.getItem(LS_KEY); if (raw) setChats(JSON.parse(raw)); } catch {}
+    setLoaded(true);
+  }, []);
+  useEffect(() => { if (loaded) localStorage.setItem(LS_KEY, JSON.stringify(chats)); }, [chats, loaded]);
+
+  const active = chats.find((c) => c.id === activeId) ?? null;
+  const messages = active?.messages ?? [];
+  const empty = messages.length === 0;
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length, streaming]);
+
+  function newChat() { setActiveId(null); setInput(""); setPending([]); setSidebarOpen(false); }
+  function selectChat(id: string) { setActiveId(id); setSidebarOpen(false); }
+  function deleteChat(id: string) {
+    setChats((prev) => prev.filter((c) => c.id !== id));
+    if (activeId === id) setActiveId(null);
+  }
 
   async function addFiles(files: FileList | File[]) {
     const imgs = await Promise.all(
@@ -66,20 +96,28 @@ export function Chat({ slateCount }: { slateCount: number }) {
   async function send() {
     if ((!input.trim() && pending.length === 0) || streaming) return;
     const userMsg: Msg = { role: "user", content: input.trim(), images: pending.length ? pending : undefined };
-    const next = [...messages, userMsg];
-    setMessages([...next, { role: "assistant", content: "" }]);
-    setInput("");
-    setPending([]);
-    setStreaming(true);
-    adjust(true);
+
+    // Resolve target chat (create one on first message).
+    let id = activeId;
+    const base = chats.find((c) => c.id === id)?.messages ?? [];
+    if (!id) {
+      id = crypto.randomUUID();
+      setChats((prev) => [{ id: id!, title: makeTitle(userMsg), messages: [], updatedAt: Date.now() }, ...prev]);
+      setActiveId(id);
+    }
+    const targetId = id;
+    const toSend = [...base, userMsg];
+
+    setChats((prev) => prev.map((c) => c.id === targetId
+      ? { ...c, messages: [...toSend, { role: "assistant", content: "" }], updatedAt: Date.now() }
+      : c));
+    setInput(""); setPending([]); setStreaming(true); adjust(true);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          messages: next.map((m) => ({ role: m.role, content: m.content, images: m.images?.map((i) => ({ media_type: i.media_type, data: i.data })) })),
-        }),
+        body: JSON.stringify({ messages: toSend.map((m) => ({ role: m.role, content: m.content, images: m.images?.map((i) => ({ media_type: i.media_type, data: i.data })) })) }),
       });
       if (!res.ok || !res.body) throw new Error(await res.text());
       const reader = res.body.getReader();
@@ -88,20 +126,24 @@ export function Chat({ slateCount }: { slateCount: number }) {
         const { value, done } = await reader.read();
         if (done) break;
         const chunk = dec.decode(value, { stream: true });
-        setMessages((m) => {
-          const c = [...m];
-          c[c.length - 1] = { ...c[c.length - 1], content: c[c.length - 1].content + chunk };
-          return c;
-        });
+        setChats((prev) => prev.map((c) => {
+          if (c.id !== targetId) return c;
+          const msgs = [...c.messages];
+          msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], content: msgs[msgs.length - 1].content + chunk };
+          return { ...c, messages: msgs, updatedAt: Date.now() };
+        }));
       }
     } catch (e) {
-      setMessages((m) => { const c = [...m]; c[c.length - 1] = { role: "assistant", content: `Error: ${String(e)}` }; return c; });
+      setChats((prev) => prev.map((c) => {
+        if (c.id !== targetId) return c;
+        const msgs = [...c.messages];
+        msgs[msgs.length - 1] = { role: "assistant", content: `Error: ${String(e)}` };
+        return { ...c, messages: msgs };
+      }));
     } finally {
       setStreaming(false);
     }
   }
-
-  const empty = messages.length === 0;
 
   const InputBox = (
     <div className="w-full">
@@ -133,13 +175,9 @@ export function Chat({ slateCount }: { slateCount: number }) {
             <Paperclip className="h-4 w-4" />
           </Button>
           <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && addFiles(e.target.files)} />
-          <Button
-            onClick={send}
-            disabled={streaming || (!input.trim() && pending.length === 0)}
-            className={cn("flex items-center gap-1 rounded-lg px-3 py-2", "bg-sky-600 text-white hover:bg-sky-500 disabled:bg-neutral-700 disabled:text-neutral-400")}
-          >
-            <ArrowUpIcon className="h-4 w-4" />
-            <span className="sr-only">Send</span>
+          <Button onClick={send} disabled={streaming || (!input.trim() && pending.length === 0)}
+            className={cn("flex items-center gap-1 rounded-lg px-3 py-2", "bg-sky-600 text-white hover:bg-sky-500 disabled:bg-neutral-700 disabled:text-neutral-400")}>
+            <ArrowUpIcon className="h-4 w-4" /><span className="sr-only">Send</span>
           </Button>
         </div>
       </div>
@@ -147,92 +185,126 @@ export function Chat({ slateCount }: { slateCount: number }) {
   );
 
   return (
-    <div className="relative flex h-[100dvh] w-full flex-col items-center bg-cover bg-center" style={{ backgroundImage: `url('${BG}')`, backgroundAttachment: "fixed" }}>
-      <header className="z-10 w-full">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <span className="font-display text-lg font-semibold text-white drop-shadow">OE Picks</span>
-          <a href="/card" className="text-xs text-neutral-300 hover:text-white">Today&rsquo;s card →</a>
-        </div>
-      </header>
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url('${BG}')`, backgroundAttachment: "fixed" }}>
+      {/* mobile backdrop */}
+      {sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 sm:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      {empty ? (
-        <motion.div variants={stagger} initial="hidden" animate="show"
-          className="z-10 flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 pb-[16vh]">
-          <div className="relative flex flex-col items-center text-center">
-            {/* soft glow behind the wordmark */}
-            <div className="hero-glow pointer-events-none absolute -top-10 h-48 w-[28rem] max-w-[90vw] rounded-full bg-indigo-500/25 blur-3xl" />
-
-            <motion.div variants={fadeUp} className="relative">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-neutral-300 backdrop-blur-md">
-                {slateCount > 0 ? (
-                  <>
-                    <span className="relative flex h-2 w-2">
-                      <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                    </span>
-                    {slateCount} game{slateCount === 1 ? "" : "s"} loaded · live odds + model edges
-                  </>
-                ) : (
-                  <>
-                    <span className="h-2 w-2 rounded-full bg-neutral-500" />
-                    No live slate · drop a screenshot to analyze
-                  </>
-                )}
-              </span>
-            </motion.div>
-
-            <motion.h1 variants={fadeUp} className="text-gradient font-display mt-5 text-6xl font-bold tracking-tight drop-shadow-[0_4px_28px_rgba(0,0,0,0.75)] sm:text-8xl">
-              OE Picks
-            </motion.h1>
-            <motion.p variants={fadeUp} className="mt-3 max-w-md text-pretty text-neutral-300">
-              Your private betting analyst. Reads the slate, grades your boards, and passes when there&rsquo;s no edge.
-            </motion.p>
-          </div>
-
-          <motion.div variants={fadeUp} className="mt-9 w-full">{InputBox}</motion.div>
-
-          <motion.div variants={fadeUp} className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            {QUICK.map((q) => (
-              <motion.button key={q.label} whileHover={{ y: -2, scale: 1.04 }} whileTap={{ scale: 0.97 }}
-                onClick={() => { setInput(q.text); if (q.label === "Grade my board" || q.label === "Review my slip") fileRef.current?.click(); }}
-                className="flex items-center gap-2 rounded-full border border-neutral-700 bg-black/50 px-4 py-2 text-xs text-neutral-300 backdrop-blur-md transition-colors hover:border-sky-500/40 hover:bg-neutral-800 hover:text-white">
-                {q.icon}<span>{q.label}</span>
-              </motion.button>
-            ))}
-          </motion.div>
-        </motion.div>
-      ) : (
-        <>
-          <div className="z-10 w-full flex-1 overflow-y-auto px-4">
-            <div className="mx-auto max-w-3xl space-y-4 py-6">
-              {messages.map((m, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}
-                  className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                  <div className={cn("max-w-[85%] rounded-2xl px-4 py-2.5 backdrop-blur-md",
-                    m.role === "user" ? "bg-sky-600/30 ring-1 ring-inset ring-sky-400/30" : "bg-black/55 ring-1 ring-inset ring-white/10")}>
-                    {m.images?.length ? (
-                      <div className="mb-2 flex flex-wrap gap-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        {m.images.map((img, j) => <img key={j} src={img.preview} alt="upload" className="max-h-44 rounded-lg ring-1 ring-white/15" />)}
-                      </div>
-                    ) : null}
-                    {m.role === "assistant" ? (
-                      m.content ? <Markdown>{m.content}</Markdown> : <span className="text-sm text-zinc-400">{streaming && i === messages.length - 1 ? "…" : ""}</span>
-                    ) : (
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-100">{m.content}</div>
-                    )}
-                  </div>
-                </motion.div>
+      <div className="relative z-10 flex h-full">
+        {/* Sidebar */}
+        <aside className={cn(
+          "fixed inset-y-0 left-0 z-30 w-64 transform border-r border-white/10 bg-zinc-950/85 backdrop-blur-xl transition-transform duration-200 sm:static sm:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}>
+          <div className="flex h-full flex-col p-3">
+            <button onClick={newChat}
+              className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10">
+              <Plus className="h-4 w-4" /> New chat
+            </button>
+            <div className="mt-3 flex-1 space-y-1 overflow-y-auto">
+              {chats.length === 0 && <p className="px-2 py-4 text-center text-xs text-zinc-500">No chats yet</p>}
+              {chats.map((c) => (
+                <div key={c.id} onClick={() => selectChat(c.id)}
+                  className={cn("group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm",
+                    c.id === activeId ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5")}>
+                  <MessageSquare className="h-4 w-4 shrink-0 text-zinc-500" />
+                  <span className="flex-1 truncate">{c.title}</span>
+                  <button onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }}
+                    className="text-zinc-500 opacity-0 transition hover:text-red-400 group-hover:opacity-100" title="Delete chat">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               ))}
-              <div ref={endRef} />
             </div>
+            <p className="px-2 pt-2 text-[10px] text-zinc-600">History is stored on this device.</p>
           </div>
-          <div className="z-10 w-full px-4 pb-4">
-            <div className="mx-auto max-w-3xl">{InputBox}</div>
-            <p className="mx-auto mt-1.5 max-w-3xl text-center text-[11px] text-neutral-400">Reads only what&rsquo;s shown · no fabricated data · model gives team probs, not player props</p>
-          </div>
-        </>
-      )}
+        </aside>
+
+        {/* Main column */}
+        <div className="flex h-full min-w-0 flex-1 flex-col items-center">
+          <header className="z-10 w-full">
+            <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setSidebarOpen((v) => !v)} className="text-neutral-300 hover:text-white sm:hidden" title="Chats">
+                  <PanelLeft className="h-5 w-5" />
+                </button>
+                <span className="font-display text-lg font-semibold text-white drop-shadow">OE Picks</span>
+              </div>
+              <a href="/card" className="text-xs text-neutral-300 hover:text-white">Today&rsquo;s card →</a>
+            </div>
+          </header>
+
+          {empty ? (
+            <motion.div variants={stagger} initial="hidden" animate="show"
+              className="z-10 flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 pb-[16vh]">
+              <div className="relative flex flex-col items-center text-center">
+                <div className="hero-glow pointer-events-none absolute -top-10 h-48 w-[28rem] max-w-[90vw] rounded-full bg-indigo-500/25 blur-3xl" />
+                <motion.div variants={fadeUp} className="relative">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-neutral-300 backdrop-blur-md">
+                    {slateCount > 0 ? (
+                      <>
+                        <span className="relative flex h-2 w-2">
+                          <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                        </span>
+                        {slateCount} game{slateCount === 1 ? "" : "s"} loaded · live odds + model edges
+                      </>
+                    ) : (
+                      <><span className="h-2 w-2 rounded-full bg-neutral-500" /> No live slate · drop a screenshot to analyze</>
+                    )}
+                  </span>
+                </motion.div>
+                <motion.h1 variants={fadeUp} className="text-gradient font-display mt-5 text-6xl font-bold tracking-tight drop-shadow-[0_4px_28px_rgba(0,0,0,0.75)] sm:text-8xl">
+                  OE Picks
+                </motion.h1>
+                <motion.p variants={fadeUp} className="mt-3 max-w-md text-pretty text-neutral-300">
+                  Your private betting analyst. Reads the slate, grades your boards, and passes when there&rsquo;s no edge.
+                </motion.p>
+              </div>
+              <motion.div variants={fadeUp} className="mt-9 w-full">{InputBox}</motion.div>
+              <motion.div variants={fadeUp} className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                {QUICK.map((q) => (
+                  <motion.button key={q.label} whileHover={{ y: -2, scale: 1.04 }} whileTap={{ scale: 0.97 }}
+                    onClick={() => { setInput(q.text); if (q.label === "Grade my board" || q.label === "Review my slip") fileRef.current?.click(); }}
+                    className="flex items-center gap-2 rounded-full border border-neutral-700 bg-black/50 px-4 py-2 text-xs text-neutral-300 backdrop-blur-md transition-colors hover:border-sky-500/40 hover:bg-neutral-800 hover:text-white">
+                    {q.icon}<span>{q.label}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
+            </motion.div>
+          ) : (
+            <>
+              <div className="z-10 w-full flex-1 overflow-y-auto px-4">
+                <div className="mx-auto max-w-3xl space-y-4 py-6">
+                  {messages.map((m, i) => (
+                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}
+                      className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                      <div className={cn("max-w-[85%] rounded-2xl px-4 py-2.5 backdrop-blur-md",
+                        m.role === "user" ? "bg-sky-600/30 ring-1 ring-inset ring-sky-400/30" : "bg-black/55 ring-1 ring-inset ring-white/10")}>
+                        {m.images?.length ? (
+                          <div className="mb-2 flex flex-wrap gap-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            {m.images.map((img, j) => <img key={j} src={img.preview} alt="upload" className="max-h-44 rounded-lg ring-1 ring-white/15" />)}
+                          </div>
+                        ) : null}
+                        {m.role === "assistant" ? (
+                          m.content ? <Markdown>{m.content}</Markdown> : <span className="text-sm text-zinc-400">{streaming && i === messages.length - 1 ? "…" : ""}</span>
+                        ) : (
+                          <div className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-100">{m.content}</div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                  <div ref={endRef} />
+                </div>
+              </div>
+              <div className="z-10 w-full px-4 pb-4">
+                <div className="mx-auto max-w-3xl">{InputBox}</div>
+                <p className="mx-auto mt-1.5 max-w-3xl text-center text-[11px] text-neutral-400">Reads only what&rsquo;s shown · no fabricated data · model gives team probs, not player props</p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
