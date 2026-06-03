@@ -51,6 +51,16 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Stop iOS Safari from zooming (and stretching the page) when focusing an
+   input whose font is < 16px. Force 16px on small screens. */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 .font-display {
   font-family: var(--font-display), var(--font-sans), sans-serif;
   letter-spacing: -0.01em;
