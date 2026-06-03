@@ -24,3 +24,7 @@ Thumbs.db
 MY STUFF/
 *.exe
 *.msi
+
+# scratch
+tmp*.html
+tmp_*
